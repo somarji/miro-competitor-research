@@ -1,0 +1,38 @@
+name: Daily refresh
+
+on:
+  schedule:
+    - cron: "0 6 * * *"   # 06:00 UTC every day
+  workflow_dispatch:        # allow manual trigger from GitHub UI
+
+permissions:
+  contents: write
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install marimo
+        run: pip install marimo
+
+      - name: Export notebook to WASM
+        run: python -m marimo export html-wasm research.py -o index.html
+
+      - name: Copy to research_report.html
+        run: cp index.html research_report.html
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add index.html research_report.html
+          git diff --staged --quiet \
+            || git commit -m "chore: daily data refresh [skip ci]"
+          git push

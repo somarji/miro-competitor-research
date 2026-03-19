@@ -1,7 +1,5 @@
 app.py
-research.py
 monitor.py
-snapshots/
 experiments/
 __marimo__/
 __pycache__/
