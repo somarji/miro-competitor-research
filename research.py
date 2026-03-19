@@ -14,6 +14,19 @@ def __():
 
 
 @app.cell
+def __(mo):
+    # Inject Miro design tokens into the page
+    _styles = mo.Html("""<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+    body, html {
+        background: #FAFAFA !important;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+    }
+    </style>""")
+    return (_styles,)
+
+
+@app.cell
 def __(Path):
     SNAPSHOTS_DIR = Path(__file__).parent / "snapshots"
     BASE_DIR = Path(__file__).parent
@@ -24,23 +37,24 @@ def __(Path):
         "Identity":    "unique_identity",
     }
 
+    # Miro brand palette
     SCORE_PALETTE = {
-        "high":           ("#bbf7d0", "#15803d"),
-        "med":            ("#fde68a", "#92400e"),
-        "medium":         ("#fde68a", "#92400e"),
-        "low":            ("#fecaca", "#991b1b"),
-        "needs research": ("#e2e8f0", "#475569"),
+        "high":           ("#D4F5E2", "#0D7F3F"),
+        "med":            ("#FFF7CC", "#8B6914"),
+        "medium":         ("#FFF7CC", "#8B6914"),
+        "low":            ("#FFE5E8", "#C0293B"),
+        "needs research": ("#F0F0EF", "#6B6B6B"),
     }
     SCORE_LABELS = {
         "high": "High", "med": "Med", "medium": "Med",
         "low": "Low", "needs research": "Needs Research",
     }
     REL_BORDER = {
-        "platform threat":        "#f59e0b",
-        "direct competitor":      "#8b5cf6",
-        "inspiration":            "#10b981",
-        "adjacent":               "#6b7280",
-        "adjacent / encroaching": "#ef4444",
+        "platform threat":        "#FF6683",  # Miro red
+        "direct competitor":      "#4262FF",  # Miro blue
+        "inspiration":            "#6EDB8C",  # Miro green
+        "adjacent":               "#A0A0B0",  # neutral
+        "adjacent / encroaching": "#ff9d48",  # Miro orange
     }
     return BASE_DIR, REL_BORDER, SCORE_LABELS, SCORE_PALETTE, SNAPSHOTS_DIR, TRACK_FIELD
 
@@ -411,9 +425,34 @@ def __(mo, refresh_output, snapshots):
     tier_filter = mo.ui.multiselect(_tiers, label="Tier")
     rel_filter  = mo.ui.multiselect(_rels,  label="Relationship")
 
+    _header = mo.Html("""
+    <div style="background:#050038;border-radius:12px;padding:24px 28px;
+                display:flex;align-items:center;gap:16px;">
+      <div style="background:#FFD02F;width:40px;height:40px;border-radius:8px;
+                  display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <span style="font-size:20px;font-weight:900;color:#050038;line-height:1;">M</span>
+      </div>
+      <div>
+        <div style="font-size:20px;font-weight:800;color:#FFFFFF;
+                    font-family:'Inter',sans-serif;letter-spacing:-.02em;">
+          Competitor Research
+        </div>
+        <div style="font-size:13px;color:#8888AA;margin-top:2px;">
+          AI Landscape &nbsp;·&nbsp; Voice, Proactivity, Identity &nbsp;·&nbsp; 2026
+        </div>
+      </div>
+    </div>""")
+
+    _filter_bar = mo.Html("""
+    <div style="background:#FFFFFF;border:1px solid #E0E0E0;border-radius:8px;
+                padding:14px 20px;">""")
+    _filter_bar_end = mo.Html("</div>")
+
     controls = mo.vstack([
-        mo.md("# 🧭 Competitor Research\n*Miro · AI Landscape · 2026*"),
+        _header,
+        _filter_bar,
         mo.hstack([search, tier_filter, rel_filter], gap="1rem", align="end"),
+        _filter_bar_end,
         refresh_output,
     ], gap="1rem")
     return controls, rel_filter, search, tier_filter
@@ -446,51 +485,55 @@ def __(TRACK_FIELD, rel_filter, search, snapshots, tier_filter, track_select):
 def __(REL_BORDER, SCORE_LABELS, SCORE_PALETTE, filtered, mo):
     def _score_badge(label, value):
         key = (value or "").lower().strip()
-        bg, fg = SCORE_PALETTE.get(key, ("#e2e8f0", "#475569"))
+        bg, fg = SCORE_PALETTE.get(key, ("#F0F0EF", "#6B6B6B"))
         display = SCORE_LABELS.get(key, value or "—")
         return (
-            f'<div style="flex:1;text-align:center;padding:12px 8px;border-radius:10px;background:{bg};">'
+            f'<div style="flex:1;text-align:center;padding:10px 6px;border-radius:8px;background:{bg};">'
             f'<div style="font-size:10px;color:{fg};font-weight:700;text-transform:uppercase;'
-            f'letter-spacing:.07em;margin-bottom:4px;">{label}</div>'
-            f'<div style="font-size:20px;font-weight:800;color:{fg};">{display}</div>'
+            f'letter-spacing:.08em;margin-bottom:3px;font-family:Inter,sans-serif;">{label}</div>'
+            f'<div style="font-size:18px;font-weight:800;color:{fg};font-family:Inter,sans-serif;">{display}</div>'
             f'</div>'
         )
 
     def _pill(text, bg, fg):
         return (
             f'<span style="font-size:11px;font-weight:600;color:{fg};background:{bg};'
-            f'padding:2px 10px;border-radius:999px;margin-right:4px;">{text}</span>'
+            f'padding:3px 10px;border-radius:32px;margin-right:4px;'
+            f'font-family:Inter,sans-serif;">{text}</span>'
         )
 
     def _changelog_rows(entries):
         if not entries:
-            return '<p style="color:#9ca3af;font-size:13px;">No recent changes logged.</p>'
+            return '<p style="color:#A0A0B0;font-size:13px;font-family:Inter,sans-serif;">No recent changes logged.</p>'
         rows = ""
         for d, desc in entries:
             if d:
                 rows += (
                     f'<div style="display:flex;gap:10px;padding:6px 0;'
-                    f'border-bottom:1px solid #f3f4f6;">'
-                    f'<code style="font-size:11px;color:#6366f1;white-space:nowrap;'
-                    f'flex-shrink:0;">{d}</code>'
-                    f'<span style="font-size:13px;color:#374151;line-height:1.5;">{desc}</span>'
+                    f'border-bottom:1px solid #F0F0EF;">'
+                    f'<code style="font-size:11px;color:#4262FF;white-space:nowrap;'
+                    f'flex-shrink:0;font-weight:600;">{d}</code>'
+                    f'<span style="font-size:13px;color:#333350;line-height:1.5;'
+                    f'font-family:Inter,sans-serif;">{desc}</span>'
                     f'</div>'
                 )
             else:
-                rows += f'<div style="padding:4px 0;font-size:13px;color:#374151;">• {desc}</div>'
+                rows += (
+                    f'<div style="padding:4px 0;font-size:13px;color:#333350;'
+                    f'font-family:Inter,sans-serif;">· {desc}</div>'
+                )
         return rows
 
     def _render_card(s):
-        border_color = REL_BORDER.get(s["relationship"].lower(), "#d1d5db")
+        border_color = REL_BORDER.get(s["relationship"].lower(), "#E0E0E0")
 
-        tier_bg  = "#dbeafe" if "leader" in s["tier"].lower() else "#dcfce7"
-        tier_fg  = "#1d4ed8" if "leader" in s["tier"].lower() else "#15803d"
+        tier_bg = "#EEF2FF" if "leader" in s["tier"].lower() else "#EDFBF3"
+        tier_fg = "#4262FF" if "leader" in s["tier"].lower() else "#0D7F3F"
         tier_pill = _pill(s["tier"], tier_bg, tier_fg) if s["tier"] else ""
-
-        rel_pill = _pill(s["relationship"], "#f3f4f6", "#374151") if s["relationship"] else ""
+        rel_pill  = _pill(s["relationship"], "#F5F5F5", "#6B6B6B") if s["relationship"] else ""
 
         scores = (
-            '<div style="display:flex;gap:8px;margin:12px 0;">'
+            '<div style="display:flex;gap:8px;margin:14px 0;">'
             + _score_badge("🎙 Voice",       s["voice_quality"])
             + _score_badge("⚡ Proactivity",  s["proactivity"])
             + _score_badge("🎭 AI Identity",  s["unique_identity"])
@@ -498,9 +541,9 @@ def __(REL_BORDER, SCORE_LABELS, SCORE_PALETTE, filtered, mo):
         )
 
         changelog_html = (
-            '<div style="margin-top:14px;">'
-            '<div style="font-size:12px;font-weight:700;color:#6b7280;text-transform:uppercase;'
-            'letter-spacing:.06em;margin-bottom:6px;">📋 Recent Changes</div>'
+            '<div style="margin-top:16px;">'
+            '<div style="font-size:11px;font-weight:700;color:#A0A0B0;text-transform:uppercase;'
+            'letter-spacing:.08em;margin-bottom:8px;font-family:Inter,sans-serif;">Recent Changes</div>'
             + _changelog_rows(s["changelog"])
             + '</div>'
         )
@@ -508,48 +551,47 @@ def __(REL_BORDER, SCORE_LABELS, SCORE_PALETTE, filtered, mo):
         learn_html = ""
         if s["learn"]:
             learn_html = (
-                '<div style="margin-top:14px;padding:10px 12px;background:#f0f4ff;'
-                'border-radius:8px;border-left:3px solid #4f46e5;">'
-                '<div style="font-size:12px;font-weight:700;color:#4f46e5;'
-                'text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">💡 Miro Can Learn</div>'
-                f'<div style="font-size:13px;color:#1e1b4b;line-height:1.6;">{s["learn"]}</div>'
+                '<div style="margin-top:16px;padding:12px 14px;background:#FFF7CC;'
+                'border-radius:8px;border-left:3px solid #FFD02F;">'
+                '<div style="font-size:11px;font-weight:700;color:#8B6914;'
+                'text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;'
+                'font-family:Inter,sans-serif;">💡 Miro Can Learn</div>'
+                f'<div style="font-size:13px;color:#050038;line-height:1.6;'
+                f'font-family:Inter,sans-serif;">{s["learn"]}</div>'
                 '</div>'
             )
 
         overview_html = ""
         if s["overview"]:
-            # strip markdown bold/italics for plain card display
             import re as _re
             plain = _re.sub(r'\*{1,2}([^*]+)\*{1,2}', r'\1', s["overview"])
             plain = _re.sub(r'#{1,6}\s*', '', plain)
             overview_html = (
-                f'<div style="font-size:13px;color:#6b7280;line-height:1.6;'
-                f'margin:8px 0;border-bottom:1px solid #f3f4f6;padding-bottom:10px;">'
+                f'<div style="font-size:13px;color:#6B6B6B;line-height:1.6;margin:10px 0 0;'
+                f'padding-bottom:12px;border-bottom:1px solid #F0F0EF;'
+                f'font-family:Inter,sans-serif;">'
                 f'{plain[:220]}{"…" if len(plain) > 220 else ""}</div>'
             )
 
         footer = (
-            f'<div style="margin-top:12px;font-size:11px;color:#9ca3af;">'
-            f'Last updated: {s["last_updated"] or "—"}</div>'
+            f'<div style="margin-top:14px;font-size:11px;color:#A0A0B0;'
+            f'font-family:Inter,sans-serif;">Updated {s["last_updated"]}</div>'
         ) if s["last_updated"] else ""
 
         return (
-            f'<div style="background:#fff;border-radius:14px;padding:20px;'
-            f'box-shadow:0 1px 4px rgba(0,0,0,.08);border:1px solid #e5e7eb;'
+            f'<div style="background:#FFFFFF;border-radius:8px;padding:20px;'
+            f'box-shadow:0 2px 8px rgba(5,0,56,.07);border:1px solid #E8E8F0;'
             f'border-top:4px solid {border_color};height:100%;box-sizing:border-box;">'
-
-            # name + pills
             f'<div style="margin-bottom:6px;">'
-            f'<span style="font-size:18px;font-weight:800;color:#111827;">{s["name"]}</span>'
+            f'<span style="font-size:17px;font-weight:800;color:#050038;'
+            f'font-family:Inter,sans-serif;letter-spacing:-.01em;">{s["name"]}</span>'
             f'</div>'
             f'<div style="margin-bottom:2px;">{tier_pill}{rel_pill}</div>'
-
             + overview_html
             + scores
             + changelog_html
             + learn_html
             + footer
-
             + '</div>'
         )
 
@@ -570,14 +612,17 @@ def __(REL_BORDER, SCORE_LABELS, SCORE_PALETTE, filtered, mo):
 
     if not filtered:
         cards = mo.callout(
-            mo.md("**No competitors match your filters.** Try clearing the search or filters."),
+            mo.md("**No competitors match your filters.** Try clearing the search or adjusting the Research Track."),
             kind="warn",
         )
     else:
-        count_label = mo.md(
-            f"**{len(filtered)}** competitor{'s' if len(filtered) != 1 else ''} shown"
+        _n = len(filtered)
+        _count = mo.Html(
+            f'<div style="font-size:13px;font-weight:600;color:#6B6B6B;'
+            f'font-family:Inter,sans-serif;padding:4px 0;">'
+            f'{_n} competitor{"s" if _n != 1 else ""} shown</div>'
         )
-        cards = mo.vstack([count_label] + _rows, gap="1rem")
+        cards = mo.vstack([_count] + _rows, gap="1rem")
 
     return (cards,)
 
