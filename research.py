@@ -570,7 +570,7 @@ def __(REL_BORDER, SCORE_LABELS, SCORE_PALETTE, filtered, mo):
                 f'<div style="font-size:13px;color:#6B6B6B;line-height:1.6;margin:10px 0 0;'
                 f'padding-bottom:12px;border-bottom:1px solid #F0F0EF;'
                 f'font-family:Inter,sans-serif;">'
-                f'{plain[:220]}{"…" if len(plain) > 220 else ""}</div>'
+                f'{plain}</div>'
             )
 
         footer = (
