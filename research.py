@@ -17,7 +17,6 @@ def __():
 def __(mo):
     # Inject Miro design tokens into the page
     _styles = mo.Html("""<style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
     body, html {
         background: #FAFAFA !important;
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
@@ -443,16 +442,9 @@ def __(mo, refresh_output, snapshots):
       </div>
     </div>""")
 
-    _filter_bar = mo.Html("""
-    <div style="background:#FFFFFF;border:1px solid #E0E0E0;border-radius:8px;
-                padding:14px 20px;">""")
-    _filter_bar_end = mo.Html("</div>")
-
     controls = mo.vstack([
         _header,
-        _filter_bar,
         mo.hstack([search, tier_filter, rel_filter], gap="1rem", align="end"),
-        _filter_bar_end,
         refresh_output,
     ], gap="1rem")
     return controls, rel_filter, search, tier_filter
@@ -508,19 +500,21 @@ def __(REL_BORDER, SCORE_LABELS, SCORE_PALETTE, filtered, mo):
         rows = ""
         for d, desc in entries:
             if d:
+                import html as _html
                 rows += (
                     f'<div style="display:flex;gap:10px;padding:6px 0;'
                     f'border-bottom:1px solid #F0F0EF;">'
                     f'<code style="font-size:11px;color:#4262FF;white-space:nowrap;'
-                    f'flex-shrink:0;font-weight:600;">{d}</code>'
+                    f'flex-shrink:0;font-weight:600;">{_html.escape(d)}</code>'
                     f'<span style="font-size:13px;color:#333350;line-height:1.5;'
-                    f'font-family:Inter,sans-serif;">{desc}</span>'
+                    f'font-family:Inter,sans-serif;">{_html.escape(desc)}</span>'
                     f'</div>'
                 )
             else:
+                import html as _html
                 rows += (
                     f'<div style="padding:4px 0;font-size:13px;color:#333350;'
-                    f'font-family:Inter,sans-serif;">· {desc}</div>'
+                    f'font-family:Inter,sans-serif;">· {_html.escape(desc)}</div>'
                 )
         return rows
 
@@ -550,6 +544,8 @@ def __(REL_BORDER, SCORE_LABELS, SCORE_PALETTE, filtered, mo):
 
         learn_html = ""
         if s["learn"]:
+            import html as _html
+            _learn = _html.escape(s["learn"])
             learn_html = (
                 '<div style="margin-top:16px;padding:12px 14px;background:#FFF7CC;'
                 'border-radius:8px;border-left:3px solid #FFD02F;">'
@@ -557,15 +553,16 @@ def __(REL_BORDER, SCORE_LABELS, SCORE_PALETTE, filtered, mo):
                 'text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;'
                 'font-family:Inter,sans-serif;">💡 Miro Can Learn</div>'
                 f'<div style="font-size:13px;color:#050038;line-height:1.6;'
-                f'font-family:Inter,sans-serif;">{s["learn"]}</div>'
+                f'font-family:Inter,sans-serif;white-space:pre-wrap;">{_learn}</div>'
                 '</div>'
             )
 
         overview_html = ""
         if s["overview"]:
-            import re as _re
+            import re as _re, html as _html
             plain = _re.sub(r'\*{1,2}([^*]+)\*{1,2}', r'\1', s["overview"])
             plain = _re.sub(r'#{1,6}\s*', '', plain)
+            plain = _html.escape(plain)
             overview_html = (
                 f'<div style="font-size:13px;color:#6B6B6B;line-height:1.6;margin:10px 0 0;'
                 f'padding-bottom:12px;border-bottom:1px solid #F0F0EF;'
